@@ -11,8 +11,9 @@ from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMessage
-
-
+from carts.models import Cart,CartItem
+from carts.views import _getCartId
+from django.contrib import messages, auth
 # Create your views here.
 def registration(request):
     if request.user.is_authenticated:
@@ -60,18 +61,55 @@ def registration(request):
         form = RegistrationForm()
     return render(request, "registration.html", {"form": form, "message": message})
 
-
 def login_view(request):
     if request.method == "POST":
         email = request.POST.get("email")
         password = request.POST.get("password")
-        user = authenticate(request, email=email, password=password)
+        user = auth.authenticate(request, email=email, password=password)
+
         if user is not None:
-            login(request, user)
+            try:
+                # Guest cart before login
+                cart = Cart.objects.get(cart_id=_getCartId(request))
+                cart_items = CartItem.objects.filter(cart=cart)
+
+                if cart_items.exists():
+                    for item in cart_items:
+                        # Check if same product+variation already exists in user's cart
+                        existing_item = CartItem.objects.filter(
+                            user=user, product=item.product
+                        )
+
+                        if existing_item.exists():
+                            merged = False
+                            for e_item in existing_item:
+                                # Check if variations are the same
+                                if set(e_item.variation.all()) == set(item.variation.all()):
+                                    # Merge quantities
+                                    e_item.quantity += item.quantity
+                                    e_item.save()
+                                    item.delete()  # remove guest cart item
+                                    merged = True
+                                    break
+                            if not merged:
+                                item.user = user
+                                item.cart = None
+                                item.save()
+                        else:
+                            # No such product in user cart → move it
+                            item.user = user
+                            item.cart = None
+                            item.save()
+            except Cart.DoesNotExist:
+                pass
+
+            auth.login(request, user)
             return redirect("home")
         else:
             messages.error(request, "Invalid Login Credentials")
+
     return render(request, "login.html")
+
 
 
 @login_required(login_url="login")
