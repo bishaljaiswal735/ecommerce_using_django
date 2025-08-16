@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="section-content padding-y bg-light">
+    <div class="container">
+
+        <div class="card mx-auto" style="max-width:600px; margin-top:50px;">
+            <div class="card-body text-center">
+
+                <h3 class="text-danger mb-3">Payment Failed!</h3>
+                <p class="mb-2">Unfortunately, your payment could not be processed.</p>
+
+                {% if order %}
+                <dl class="row text-left">
+                    <dt class="col-sm-5">Order Number:</dt>
+                    <dd class="col-sm-7">{{ order_number }}</dd>
+                </dl>
+                {% endif %}
+
+                <p class="mb-2">Please try again or contact support if the problem persists.</p>
+
+                <a href="{% url 'checkout' %}" class="btn btn-warning mt-3">Retry Payment</a>
+                <a href="{% url 'store' %}" class="btn btn-secondary mt-3">Go to Store</a>
+
+            </div> <!-- card-body -->
+        </div> <!-- card -->
+
+    </div> <!-- container -->
+</section>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="section-content padding-y bg-light">
+    <div class="container">
+
+        <div class="card mx-auto" style="max-width:600px; margin-top:50px;">
+            <div class="card-body text-center">
+
+                
+                <h3 class="text-success mb-3">Payment Successful!</h3>
+                <p class="mb-2">Thank you for your purchase.</p>
+
+                <dl class="row text-left">
+                    <dt class="col-sm-5">User:</dt>
+                    <dd class="col-sm-7">{{ payment.user}}</dd>
+
+                    <dt class="col-sm-5">Order Number:</dt>
+                    <dd class="col-sm-7">{{ order_number }}</dd>
+
+                    <dt class="col-sm-5">Payment ID:</dt>
+                    <dd class="col-sm-7">{{ payment.payment_id }}</dd>
+
+                    <dt class="col-sm-5">Amount Paid:</dt>
+                    <dd class="col-sm-7">Rs {{ payment.amount_paid }}</dd>
+                </dl>
+
+                <a href="{% url 'store' %}" class="btn btn-primary mt-3">Continue Shopping</a>
+
+            </div> <!-- card-body -->
+        </div> <!-- card -->
+
+    </div> <!-- container -->
+</section>
+{% endblock %}

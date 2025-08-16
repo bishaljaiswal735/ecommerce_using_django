@@ -100,6 +100,8 @@ def login_view(request):
                             item.user = user
                             item.cart = None
                             item.save()
+                        if not CartItem.objects.filter(cart=cart).exists():
+                                cart.delete()
             except Cart.DoesNotExist:
                 pass
 
