@@ -4,12 +4,16 @@ from django.http import HttpResponse
 from carts.models import CartItem
 from .models import Order, OrderProduct, Payment
 from .forms import OrderForm
+from store.models import Product
 from django.contrib import messages
 from django.urls import reverse
 import datetime
 import hmac
 import hashlib
 import base64, json
+from django.template.loader import render_to_string
+from django.core.mail import EmailMessage
+from django.contrib import messages, auth
 
 # Create your views here
 
@@ -68,10 +72,63 @@ def payment_success(request):
                 "amount_paid": amount,
             },
         )
+        try:
+            order = Order.objects.get(
+                user=request.user, is_ordered=False, order_number=transaction_uuid
+            )
+            order.payment = payment
+            order.is_ordered = True
+            order.save()
+        except Order.DoesNotExist:
+                messages.error(request, "Order not found.")
+                return redirect("store")
+        # creating orderProduct table
+        cart_items = CartItem.objects.filter(user=request.user)
+        for item in cart_items:
+            ordered_product = OrderProduct.objects.create(
+                order=order,
+                payment=payment,
+                user=request.user,
+                product=item.product,
+                quantity=item.quantity,
+                product_price=item.product.price,
+            )
+            ordered_product.variation.set(item.variation.all())
+            variations = item.variation.all()
+            for var in variations:
+                if var.variation_category.lower() == "color":
+                    ordered_product.color = var.variation_value
+                elif var.variation_category.lower() == "size":
+                    ordered_product.size = var.variation_value
+            ordered_product.ordered = True
+            ordered_product.save()
+            # reducing the quantity of sold products
+            product = Product.objects.get(id=item.product.id)
+            product.stock -= item.quantity
+            product.save()
+            cart_items.delete()
+        user = request.user
+        mail_subject = "Thank you for your order!"
+        message = render_to_string(
+            "purchase_success_notification.html",
+            {"user": user, "order": order},
+        )
+        to_email = user.email
+        send_email = EmailMessage(mail_subject, message, to=[to_email])
+        send_email.send()
+
+        total_before_tax = order.order_total - order.tax
+        ordered_product = OrderProduct.objects.filter(user = request.user, order__order_number = order.order_number)
+
         return render(
             request,
             "payment_success.html",
-            {"payment": payment, "order_number": transaction_uuid},
+            {
+                "payment": payment,
+                "order": order,
+                "ordered_products": ordered_product,
+                "total": total_before_tax,
+            },
         )
     else:
         # Redirect to failed page
@@ -120,6 +177,7 @@ def place_order(request):
             data.order_total = grand_total
             data.tax = tax
             data.ip = request.META.get("REMOTE_ADDR")
+            data.user = request.user
             data.save()
             # creating ordernumber from datestring
             yr = int(datetime.date.today().strftime("%Y"))

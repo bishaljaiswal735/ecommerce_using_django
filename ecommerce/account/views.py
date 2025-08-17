@@ -87,6 +87,7 @@ def login_view(request):
                                 if set(e_item.variation.all()) == set(item.variation.all()):
                                     # Merge quantities
                                     e_item.quantity += item.quantity
+                                    e_item.total_price += item.total_price
                                     e_item.save()
                                     item.delete()  # remove guest cart item
                                     merged = True
