@@ -18,25 +18,26 @@ class MyAccountManager(BaseUserManager):
         user.set_password(password)
         user.save(using=self._db)
         return user
+
     def create_superuser(self, first_name, last_name, email, username, password=None):
-         if not email:
+        if not email:
             raise ValueError("user must have email")
-         if not username:
+        if not username:
             raise ValueError("user must have username")
-         user = self.model(
+        user = self.model(
             email=self.normalize_email(email),
             first_name=first_name,
             last_name=last_name,
             username=username,
         )
-         user.set_password(password)
-         user.is_active = True
-         user.is_admin = True
-         user.is_superadmin = True
-         user.is_staff = True
-         user.save(using=self._db)
-         return user
-    
+        user.set_password(password)
+        user.is_active = True
+        user.is_admin = True
+        user.is_superadmin = True
+        user.is_staff = True
+        user.save(using=self._db)
+        return user
+
 
 class Account(AbstractBaseUser):
     first_name = models.CharField(max_length=100)
@@ -58,7 +59,7 @@ class Account(AbstractBaseUser):
     @property
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
-    
+
     def __str__(self):
         return self.email
 
@@ -67,3 +68,11 @@ class Account(AbstractBaseUser):
 
     def has_module_perms(self, add_label):
         return True
+
+
+class UserProfile(models.Model):
+    user = models.ForeignKey(Account, on_delete=models.CASCADE)
+    profile_picture = models.ImageField(upload_to="photos/profile_pic", default= "photos/profile_pic/default.jpg", blank=True, null=True)
+
+    def __str__(self):
+        return self.user

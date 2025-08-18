@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from .forms import RegistrationForm
-from .models import Account
+from .models import Account, UserProfile
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -14,6 +14,7 @@ from django.core.mail import EmailMessage
 from carts.models import Cart,CartItem
 from carts.views import _getCartId
 from django.contrib import messages, auth
+from orders.models import Order, OrderProduct
 # Create your views here.
 def registration(request):
     if request.user.is_authenticated:
@@ -140,10 +141,23 @@ def activate(request, uidb64, token):
 
 @login_required(login_url="login")
 def dashboard_view(request):
+    orders = Order.objects.filter(user = request.user)
+    orders_count = 0 
+    for order in orders:
+        orders_count += 1
+    try:
+        userprofile = UserProfile.objects.get(user = request.user)
+    except UserProfile.DoesNotExist:
+        userprofile = UserProfile.objects.create(user = request.user)
+    return render(request, "dashboard.html",{'orders_count':orders_count, 'userprofile':userprofile})
 
-    return render(request, "dashboard.html")
-
-
+@login_required(login_url="login")
+def my_orders(request):
+    orders = Order.objects.filter(user=request.user, is_ordered=True).order_by('-created_at')
+    context = {
+        'orders': orders,
+    }
+    return render(request, 'my_orders.html', context)
 def forgetpassword(request):
     if request.method == "POST":
         email = request.POST.get("email")
