@@ -39,7 +39,7 @@
                                         <li><strong>Order</strong> #{{order.order_number}}</li>
                                         <li><strong>Transaction ID</strong> {{order.payment.payment_id}}</li>
                                         <li><strong>Order Date:</strong> {{order.created_at}}</li>
-                                        <li><strong>Status:</strong> {{order.payment.status}}</li>
+                                        <li><strong>Payment Method:</strong> {{order.payment.payment_method}}</li>
                                     </ul>
                                 </div>
                             </div>
@@ -59,7 +59,7 @@
                                             <tr>
                                                 <td>{{item.product.product_name}}
                                                   <p class="text-muted small">
-                                          					{% if item.variations.all %}
+                                          					{% if item.variation.all %}
                                           						{% for i in item.variation.all %}
                                           							{{ i.variation_category | capfirst }} : {{ i.variation_value | capfirst }} <br>
                                           						{% endfor %}

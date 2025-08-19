@@ -7,10 +7,17 @@
       <div class="row no-gutters">
         <aside class="col-md-6">
           <article class="gallery-wrap">
-            <div class="img-big-wrap">
+            <div class="img-big-wrap mainImage">
               <a href="#"><img src="{{product.image.url}}" /></a>
             </div>
-            <!-- img-big-wrap.// -->
+            <ul class="thumb">
+						<li>
+							<a href="{{ product.image.url }}" target="mainImage"><img src="{{ product.image.url }}" alt="Product Image"></a>
+							{% for i in product_gallery %}
+							<a href="{{i.image.url}}" target="mainImage"><img src="{{i.image.url}}" alt="Product Image"></a>
+							{% endfor %}
+						</li>
+					</ul>
           </article>
           <!-- gallery-wrap .end// -->
         </aside>
