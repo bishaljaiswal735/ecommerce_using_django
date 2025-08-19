@@ -195,6 +195,49 @@ def edit_profile(request):
     return render(request, "edit_profile.html", context)
 
 
+@login_required(login_url="login")
+def change_password(request):
+    if request.method == "POST":
+        current_password = request.POST.get("current_password")
+        new_password = request.POST.get("new_password")
+        confirm_password = request.POST.get("confirm_password")
+
+        # authenticate correctly
+        user = Account.objects.get(username__exact=request.user.username)
+        success = user.check_password(current_password)
+
+        if success:
+            if new_password == confirm_password:
+                user.set_password(new_password)  # hashes the password
+                user.save()
+                messages.success(request, "Your new password was saved successfully!")
+                # update session so user doesn't get logged out
+                auth.update_session_auth_hash(request, user)
+            else:
+                messages.error(request, "New password and Confirm password must be the same.")
+        else:
+            messages.error(request, "Current password is incorrect!")
+
+        return redirect("change_password")
+
+    return render(request, "change_password.html")
+
+@login_required(login_url='login')
+def order_detail(request, order_id):
+    order_detail = OrderProduct.objects.filter(order__order_number=order_id)
+    order = Order.objects.get(order_number=order_id)
+    subtotal = 0
+    for i in order_detail:
+        subtotal += i.product_price * i.quantity
+
+    context = {
+        'order_detail': order_detail,
+        'order': order,
+        'subtotal': subtotal,
+    }
+    return render(request, 'order_detail.html', context)
+
+
 def forgetpassword(request):
     if request.method == "POST":
         email = request.POST.get("email")
