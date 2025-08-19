@@ -1,6 +1,6 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
-from .forms import RegistrationForm
+from .forms import RegistrationForm, UserForm, UserProfileForm
 from .models import Account, UserProfile
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -11,10 +11,12 @@ from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMessage
-from carts.models import Cart,CartItem
+from carts.models import Cart, CartItem
 from carts.views import _getCartId
 from django.contrib import messages, auth
 from orders.models import Order, OrderProduct
+
+
 # Create your views here.
 def registration(request):
     if request.user.is_authenticated:
@@ -62,6 +64,7 @@ def registration(request):
         form = RegistrationForm()
     return render(request, "registration.html", {"form": form, "message": message})
 
+
 def login_view(request):
     if request.method == "POST":
         email = request.POST.get("email")
@@ -85,7 +88,9 @@ def login_view(request):
                             merged = False
                             for e_item in existing_item:
                                 # Check if variations are the same
-                                if set(e_item.variation.all()) == set(item.variation.all()):
+                                if set(e_item.variation.all()) == set(
+                                    item.variation.all()
+                                ):
                                     # Merge quantities
                                     e_item.quantity += item.quantity
                                     e_item.total_price += item.total_price
@@ -103,7 +108,7 @@ def login_view(request):
                             item.cart = None
                             item.save()
                         if not CartItem.objects.filter(cart=cart).exists():
-                                cart.delete()
+                            cart.delete()
             except Cart.DoesNotExist:
                 pass
 
@@ -113,7 +118,6 @@ def login_view(request):
             messages.error(request, "Invalid Login Credentials")
 
     return render(request, "login.html")
-
 
 
 @login_required(login_url="login")
@@ -141,23 +145,56 @@ def activate(request, uidb64, token):
 
 @login_required(login_url="login")
 def dashboard_view(request):
-    orders = Order.objects.filter(user = request.user)
-    orders_count = 0 
+    orders = Order.objects.filter(user=request.user)
+    orders_count = 0
     for order in orders:
         orders_count += 1
     try:
-        userprofile = UserProfile.objects.get(user = request.user)
+        userprofile = UserProfile.objects.get(user=request.user)
     except UserProfile.DoesNotExist:
-        userprofile = UserProfile.objects.create(user = request.user)
-    return render(request, "dashboard.html",{'orders_count':orders_count, 'userprofile':userprofile})
+        userprofile = UserProfile.objects.create(user=request.user)
+    return render(
+        request,
+        "dashboard.html",
+        {"orders_count": orders_count, "userprofile": userprofile},
+    )
+
 
 @login_required(login_url="login")
 def my_orders(request):
-    orders = Order.objects.filter(user=request.user, is_ordered=True).order_by('-created_at')
+    orders = Order.objects.filter(user=request.user, is_ordered=True).order_by(
+        "-created_at"
+    )
     context = {
-        'orders': orders,
+        "orders": orders,
     }
-    return render(request, 'my_orders.html', context)
+    return render(request, "my_orders.html", context)
+
+
+@login_required(login_url="login")
+def edit_profile(request):
+    userprofile = get_object_or_404(UserProfile, user=request.user)
+    if request.method == "POST":
+        user_form = UserForm(request.POST, instance=request.user)
+        profile_form = UserProfileForm(
+            request.POST, request.FILES, instance=userprofile
+        )
+        if user_form.is_valid() and profile_form.is_valid():
+            user_form.save()
+            profile_form.save()
+            messages.success(request, "Your profile has been updated.")
+            return redirect("edit_profile")
+    else:
+        user_form = UserForm(instance=request.user)
+        profile_form = UserProfileForm(instance=userprofile)
+    context = {
+        "user_form": user_form,
+        "profile_form": profile_form,
+        "userprofile": userprofile,
+    }
+    return render(request, "edit_profile.html", context)
+
+
 def forgetpassword(request):
     if request.method == "POST":
         email = request.POST.get("email")
@@ -208,12 +245,16 @@ def resetpassword_validation(request, uidb64, token):
             user.save()
             messages.success(request, "Successfully reset password")
             return redirect("login")
-        return render(request, "reset_password.html", {"uidb64": uidb64, "token": token})
+        return render(
+            request, "reset_password.html", {"uidb64": uidb64, "token": token}
+        )
 
     else:
         if user is None:
             messages.error(request, "Invalid reset link!!")
         else:
             messages.error(request, "Link has been expired.")
-        
-        return render(request, "reset_password.html", {"uidb64": uidb64, "token": token})
+
+        return render(
+            request, "reset_password.html", {"uidb64": uidb64, "token": token}
+        )
