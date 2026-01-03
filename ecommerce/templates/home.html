@@ -5,43 +5,69 @@
 <section class="section-intro padding-y-sm">
 <div class="container">
 
-<div class="intro-banner-wrap">
-	<img src="{% static 'images/banners/banner.jpg' %}" class="img-fluid rounded">
+<div class="w-100">
+  <img src="{% static 'images/banners/banner.jpg' %}?v=2" 
+       class="img-fluid w-100 rounded" 
+       alt="Banner">
 </div>
+
 
 </div> <!-- container //  -->
 </section>
 <!-- ========================= SECTION MAIN END// ========================= -->
 
 <!-- ========================= SECTION  ========================= -->
-<section class="section-name padding-y-sm">
-<div class="container">
+<section class="section-name my-5">
+  <div class="container">
 
-<header class="section-heading">
-	<a href="{% url 'store' %}" class="btn btn-outline-primary float-right">See all</a>
-	<h3 class="section-title">Popular products</h3>
-</header><!-- sect-heading -->
+    <!-- Section Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="h4 font-weight-bold text-dark">✨ Popular Products</h2>
+      <a href="{% url 'store' %}" class="btn btn-sm btn-primary">Browse All</a>
+    </div>
 
-	
-<div class="row">
-	{% for item in product %}
-	<div class="col-md-3">
-		<div class="card card-product-grid">
-			<a href="{% url 'product_detail' item.category.slug item.slug %}" class="img-wrap"> <img src="{{item.image.url}}"> </a>
-			<figcaption class="info-wrap">
-				<a href="{% url 'product_detail' item.category.slug item.slug %}" class="title">{{item.product_name}}</a>
-				<div class="price mt-1">Rs {{item.price}}</div> <!-- price-wrap.// -->
-			</figcaption>
-		</div>
-	</div> <!-- col.// -->
-	{% endfor %}
-	
-	
-	</div> <!-- col.// -->
-</div> <!-- row.// -->
+    <!-- Product Grid -->
+    <div class="row g-4">
+      {% for item in product %}
+      <div class="col-lg-3 col-md-4 col-sm-6 d-flex align-items-stretch">
+        <div class="card border-0 shadow-sm h-100 rounded-lg overflow-hidden">
 
-</div><!-- container // -->
+          <!-- Product Image (fixed height + crop) -->
+          <a href="{% url 'product_detail' item.category.slug item.slug %}" class="position-relative d-block">
+            <img src="{{item.image.url}}" 
+                 class="card-img-top img-fluid" 
+                 alt="{{item.product_name}}" 
+                 style="height:250px; object-fit:cover;">
+          </a>
+          
+          <!-- Product Info -->
+          <div class="card-body text-center d-flex flex-column justify-content-between">
+            <h6 class="card-title mb-1">
+              <a href="{% url 'product_detail' item.category.slug item.slug %}" class="text-dark stretched-link">
+                {{item.product_name}}
+              </a>
+            </h6>
+            <p class="text-primary font-weight-bold mb-0">Rs {{item.price}}</p>
+          </div>
+
+          <!-- Hover Footer -->
+          <div class="card-footer bg-white border-0 text-center pb-3">
+            <a href="{% url 'product_detail' item.category.slug item.slug %}" class="btn btn-outline-dark btn-sm">
+              <i class="fa fa-eye mr-1"></i> View
+            </a>
+            <a href="{% url 'cart' %}" class="btn btn-sm btn-dark ml-2">
+              <i class="fa fa-cart-plus mr-1"></i> Add
+            </a>
+          </div>
+
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
 </section>
+
 {% endblock %}
 
 
